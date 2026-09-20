@@ -7,7 +7,11 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
-import imageio_ffmpeg
+
+try:
+    import imageio_ffmpeg
+except ImportError:
+    imageio_ffmpeg = None
 
 from backend.app.core.errors import NoAudioError, AudioProcessingFailedError
 
@@ -38,10 +42,12 @@ def get_ffmpeg_binary() -> str:
     if sys_path:
         return sys_path
     # 2. imageio-ffmpeg bundled binary
-    try:
-        return imageio_ffmpeg.get_ffmpeg_exe()
-    except Exception:
-        return "ffmpeg"
+    if imageio_ffmpeg is not None:
+        try:
+            return imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            pass
+    return "ffmpeg"
 
 
 def probe_media(file_path: Path) -> ContainerProbeResult:

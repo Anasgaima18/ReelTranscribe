@@ -23,7 +23,7 @@ class WhisperProvider(ASRProvider):
         token: Optional[str] = None,
         model_name: Optional[str] = None
     ):
-        self.token = token or settings.HF_TOKEN
+        self.token = token if token is not None else settings.HF_TOKEN
         self.model_name = model_name or settings.WHISPER_MODEL or "openai/whisper-large-v3"
 
     def is_available(self) -> bool:

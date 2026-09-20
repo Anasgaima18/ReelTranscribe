@@ -24,7 +24,7 @@ class SarvamProvider(ASRProvider):
         model: Optional[str] = None,
         default_mode: Optional[str] = None
     ):
-        self.api_key = api_key or settings.SARVAM_API_KEY
+        self.api_key = api_key if api_key is not None else settings.SARVAM_API_KEY
         self.model = model or settings.SARVAM_MODEL or "saaras:v4"
         self.default_mode = default_mode or settings.SARVAM_MODE or "codemix"
 
