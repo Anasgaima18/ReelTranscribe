@@ -4,7 +4,13 @@ Burned-in Caption Visual OCR and Edge Detector.
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple
-from PIL import Image, ImageFilter, ImageOps
+
+try:
+    from PIL import Image, ImageFilter, ImageOps
+except ImportError:
+    Image = None
+    ImageFilter = None
+    ImageOps = None
 
 from backend.app.config import settings
 
@@ -37,7 +43,7 @@ class BurnedInCaptionDetector:
         """
         Analyzes a single frame for high-contrast, structured text blocks in the caption region.
         """
-        if not frame_path.exists():
+        if not frame_path.exists() or Image is None:
             return False, 0.0
 
         try:
