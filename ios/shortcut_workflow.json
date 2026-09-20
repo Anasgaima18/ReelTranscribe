@@ -1,0 +1,64 @@
+{
+  "name": "ReelTranscribe",
+  "version": "1.0.0",
+  "category": "Share Sheet",
+  "accepted_types": [
+    "URL",
+    "Safari web pages",
+    "Media",
+    "Videos",
+    "Audio",
+    "Files",
+    "Text"
+  ],
+  "configuration": {
+    "backend_url": "https://reeltranscribe.onrender.com"
+  },
+  "workflow_steps": [
+    {
+      "step": 1,
+      "action": "Receive Shortcut Input",
+      "description": "Receive shared items from iOS Share Sheet (Reels link, YouTube Shorts, video file, audio, or text)"
+    },
+    {
+      "step": 2,
+      "action": "Detect Input Type",
+      "logic": "IF Shortcut Input has URLs OR text contains 'http': type = 'url', url = extracted_url. ELSE IF Shortcut Input is Media/File: type = 'upload', file = Shortcut Input."
+    },
+    {
+      "step": 3,
+      "action": "Post Job to ReelTranscribe API",
+      "method": "POST",
+      "endpoint": "{backend_url}/v1/jobs",
+      "payload": "IF type == 'url': JSON {'source_type': 'url', 'url': url}. IF type == 'upload': Upload to {backend_url}/v1/media/upload then POST {'source_type': 'upload', 'upload_file_path': upload_file_path}",
+      "output_variable": "job_response"
+    },
+    {
+      "step": 4,
+      "action": "Extract Job ID",
+      "expression": "job_response.job_id"
+    },
+    {
+      "step": 5,
+      "action": "Poll Status Loop",
+      "description": "Repeat up to 25 times with 2-second delay: GET {backend_url}/v1/jobs/{job_id}. If status == 'completed' or 'failed', exit repeat."
+    },
+    {
+      "step": 6,
+      "action": "Fetch Final Result",
+      "method": "GET",
+      "endpoint": "{backend_url}/v1/jobs/{job_id}/result",
+      "output_variable": "final_result"
+    },
+    {
+      "step": 7,
+      "action": "Format User Presentation",
+      "logic": "Text banner: 'ReelTranscribe ✓ Transcription complete\nLanguage: {final_result.language.primary}\nTranscript:\n{final_result.transcription.final}'"
+    },
+    {
+      "step": 8,
+      "action": "Handle Captions Output",
+      "logic": "IF final_result.captions.detected == true: Append '\n\nCaptions: ✓ Original captions detected.\nFiles available: SRT, VTT'. Provide Menu: [Copy Transcript, Share Transcript, Save SRT, Save VTT]. ELSE: Append '\n\n✓ Transcript ready. No original captions detected. Subtitle files were not generated.' Provide Menu: [Copy Transcript, Share Transcript]."
+    }
+  ]
+}

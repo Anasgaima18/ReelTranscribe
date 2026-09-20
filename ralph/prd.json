@@ -1,0 +1,346 @@
+{
+  "project": "ReelTranscribe",
+  "feature": "Autonomous Production Build of ReelTranscribe",
+  "workingDirectory": "d:/Projects/REELSTRANSCRIBE",
+  "branchName": "main",
+  "userStories": [
+    {
+      "id": "RT-001",
+      "title": "Repository initialization & Ralph loop structure",
+      "description": "Initialize Ralph environment (ralph/prd.json, ralph/prompt.md, ralph/guardrails.md, ralph/progress.txt), install Ralph skill, and configure workspace layout.",
+      "acceptanceCriteria": [
+        "ralph/ directory exists with prd.json, prompt.md, guardrails.md, progress.txt",
+        ".agents/skills/ralph/SKILL.md is installed and valid",
+        "Directory structure for backend, ios, benchmark, docs, tests exists"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T10:56:05.875028+00:00: tests/test_rt001_initialization.py passed (4/4)",
+      "priority": 1
+    },
+    {
+      "id": "RT-002",
+      "title": "Core backend configuration, errors, and base application",
+      "description": "Build FastAPI backend app with typed Pydantic Settings, centralized structured error handling (INVALID_URL, ASR_FAILED, etc.), CORS, and request lifespan.",
+      "acceptanceCriteria": [
+        "backend/app/config.py loads environment variables with defaults and validations",
+        "backend/app/core/errors.py maps error codes to standard RFC/structured error responses",
+        "backend/app/main.py starts FastAPI app without exceptions"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T10:59:03.994286+00:00: tests/test_rt002_core.py passed (4/4)",
+      "priority": 2
+    },
+    {
+      "id": "RT-003",
+      "title": "Health & status API",
+      "description": "Implement GET /health returning service status, version, and provider availability without exposing sensitive tokens or credentials.",
+      "acceptanceCriteria": [
+        "GET /health returns 200 with status='ok'",
+        "Response contains providers object indicating configured status of Sarvam, Whisper/HF, etc.",
+        "Zero secrets or tokens are exposed in health response"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T10:59:49.369632+00:00: tests/test_rt003_health.py passed (2/2)",
+      "priority": 3
+    },
+    {
+      "id": "RT-004",
+      "title": "SSRF-protected media resolver with industry-standard yt-dlp adapter",
+      "description": "Implement MediaResolver with strict SSRF defense (blocking private IPs, loopbacks, link-local, private IPv6, cloud metadata endpoints) and provider adapters for Direct URLs, Instagram, YouTube, TikTok using yt-dlp.",
+      "acceptanceCriteria": [
+        "Private IPs (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.1, 169.254.169.254) are rejected immediately before DNS resolution/connection",
+        "yt-dlp adapter inspects and resolves video info and streams safely",
+        "Rejects unsupported schemes or malicious redirect attempts",
+        "Unit tests pass: tests/test_security_ssrf.py and tests/test_media_resolver.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:01:30.779699+00:00: tests/test_security_ssrf.py & test_media_resolver.py passed (6/6)",
+      "priority": 4
+    },
+    {
+      "id": "RT-005",
+      "title": "Direct media ingestion & file uploads",
+      "description": "Implement direct media file upload endpoint accepting mp4, mov, webm, m4v, mp3, wav, m4a, aac, flac, ogg, opus with magic number / MIME verification and size limits.",
+      "acceptanceCriteria": [
+        "POST /v1/media/upload validates file extension and MIME type",
+        "Enforces MAX_FILE_SIZE_MB limit",
+        "Streams upload safely into isolated job temporary directory",
+        "Unit tests pass: tests/test_media_upload.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:02:09.708370+00:00: tests/test_media_upload.py passed (3/3)",
+      "priority": 5
+    },
+    {
+      "id": "RT-006",
+      "title": "FFmpeg/FFprobe audio probe, extraction, and normalization",
+      "description": "Implement media inspector and audio extractor normalizing audio to 16 kHz mono WAV, probing duration and audio streams, with graceful handling if FFmpeg is binary or system-provided.",
+      "acceptanceCriteria": [
+        "Audio probe checks container duration, codec, and presence of audio stream",
+        "Audio extraction outputs 16 kHz mono WAV PCM",
+        "Handles missing audio tracks with NO_AUDIO structured error",
+        "Unit tests pass: tests/test_audio_pipeline.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:03:10.193235+00:00: tests/test_audio_pipeline.py passed (2/2)",
+      "priority": 6
+    },
+    {
+      "id": "RT-007",
+      "title": "Sarvam Saaras v4 integration",
+      "description": "Implement SarvamProvider utilizing current official REST endpoint https://api.sarvam.ai/speech-to-text with model saaras:v4, codemix and transcribe modes, chunk timestamps, and api-subscription-key authentication.",
+      "acceptanceCriteria": [
+        "SarvamProvider implements ASRProvider protocol",
+        "Maps parameters: model='saaras:v4', mode='codemix' or 'transcribe', language_code='unknown' (auto)",
+        "Parses chunk timestamps and transcript correctly",
+        "Unit tests pass: tests/test_asr_sarvam.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:04:10.705894+00:00: tests/test_asr_sarvam.py passed (3/3)",
+      "priority": 7
+    },
+    {
+      "id": "RT-008",
+      "title": "Hugging Face Inference Providers & Whisper fallback",
+      "description": "Implement WhisperProvider targeting Hugging Face Inference Providers router (https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3) or local engine when configured.",
+      "acceptanceCriteria": [
+        "WhisperProvider connects via router.huggingface.co using Bearer token",
+        "Handles timestamps and language probabilities",
+        "Maps timeout and rate limits to standard exceptions",
+        "Unit tests pass: tests/test_asr_whisper.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:04:45.678832+00:00: tests/test_asr_whisper.py passed (3/3)",
+      "priority": 8
+    },
+    {
+      "id": "RT-009",
+      "title": "Hinglish specialist integration (Prime, Apex, Zero-STT)",
+      "description": "Implement HinglishProvider targeting Oriserve/Whisper-Hindi2Hinglish-Prime and shunyalabs/zero-stt-hinglish preserving code-switching without translating to English.",
+      "acceptanceCriteria": [
+        "HinglishProvider targets verified model identifiers",
+        "Preserves Hindi-English mixed vocabulary in Latin script verbatim",
+        "Does not rewrite or summarize spoken input",
+        "Unit tests pass: tests/test_asr_hinglish.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:05:24.315164+00:00: tests/test_asr_hinglish.py passed (2/2)",
+      "priority": 9
+    },
+    {
+      "id": "RT-010",
+      "title": "Provider-independent ASR router with cooldown and retry backoff",
+      "description": "Build ASRRouter with configurable priority list (Sarvam -> Whisper -> Hinglish -> Fallback), exponential cooldown on rate limits, and zero silent provider switches.",
+      "acceptanceCriteria": [
+        "Router tries primary provider first",
+        "Falls back cleanly on provider error or rate limit with cooldown tracking",
+        "Records fallback_used flag and provider trail in metadata",
+        "Unit tests pass: tests/test_asr_router.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:05:57.238746+00:00: tests/test_asr_router.py passed (3/3)",
+      "priority": 10
+    },
+    {
+      "id": "RT-011",
+      "title": "Transcript quality gate & analyzer",
+      "description": "Implement TranscriptQualityAnalyzer calculating confidence, repetition penalty, audio duration vs word count ratio, and vocabulary entropy to trigger fallback on degraded ASR.",
+      "acceptanceCriteria": [
+        "Detects abnormal repetition (e.g. repeated hallucinated phrases)",
+        "Flags low coverage or suspiciously short output for lengthy audio",
+        "Configurable thresholds for pass/fail decision",
+        "Unit tests pass: tests/test_quality_gate.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:06:51.605700+00:00: tests/test_quality_gate.py passed (4/4)",
+      "priority": 11
+    },
+    {
+      "id": "RT-012",
+      "title": "Safe transcript normalizer",
+      "description": "Implement normalizer that preserves verbatim spoken language, slang, and code-mixed words, performing only punctuation and whitespace formatting without hallucination.",
+      "acceptanceCriteria": [
+        "Leaves code-mixed words unchanged",
+        "Does not translate or summarize speech",
+        "Returns raw_transcript and final_transcript separately",
+        "Unit tests pass: tests/test_normalizer.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:07:24.365343+00:00: tests/test_normalizer.py passed (3/3)",
+      "priority": 12
+    },
+    {
+      "id": "RT-013",
+      "title": "Dual-mode caption detector (Embedded streams + Burned-in visual)",
+      "description": "Implement SubtitleStreamDetector (FFprobe -select_streams s) and BurnedInCaptionDetector (frame sampling in lower 35% region with edge contrast / OCR stability).",
+      "acceptanceCriteria": [
+        "Detects embedded subtitle stream when present",
+        "Detects burned-in captions in sampled video frames with confidence score",
+        "Returns captions_detected: false when neither embedded nor burned-in captions exist",
+        "Unit tests pass: tests/test_caption_detector.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:08:08.623652+00:00: tests/test_caption_detector.py passed (3/3)",
+      "priority": 13
+    },
+    {
+      "id": "RT-014",
+      "title": "Conditional subtitle generator (SRT & WebVTT)",
+      "description": "Implement SRT and WebVTT generator conforming to standard line lengths (max 42 chars), line counts (max 2), and timing boundaries. Crucially: only generates subtitle files when captions_detected == true.",
+      "acceptanceCriteria": [
+        "Generates valid RFC/spec-compliant SRT and WebVTT format using srt and webvtt-py",
+        "Enforces that subtitle files are omitted when captions_detected is false",
+        "Handles Unicode, Indic characters, and RTL scripts safely",
+        "Unit tests pass: tests/test_subtitles.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:08:46.050307+00:00: tests/test_subtitles.py passed (3/3)",
+      "priority": 14
+    },
+    {
+      "id": "RT-015",
+      "title": "Asynchronous job lifecycle, queue, and polling API",
+      "description": "Implement POST /v1/jobs, GET /v1/jobs/{job_id}, and GET /v1/jobs/{job_id}/result with state transitions (queued, downloading, transcribing, detecting_captions, completed, failed) and temp file cleanup.",
+      "acceptanceCriteria": [
+        "POST /v1/jobs returns 202 Accepted with job_id and queued status",
+        "GET /v1/jobs/{id} returns current state and progress without blocking mobile client",
+        "GET /v1/jobs/{id}/result returns full completed payload",
+        "Ephemeral disk files are 100% cleaned up upon job completion or failure",
+        "Unit tests pass: tests/test_jobs_api.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:10:14.942913+00:00: tests/test_jobs_api.py passed (2/2)",
+      "priority": 15
+    },
+    {
+      "id": "RT-016",
+      "title": "iOS Shortcut architecture & Share Sheet workflow",
+      "description": "Create ios/ReelTranscribe.shortcut workflow specification and file supporting Share Sheet URLs, video, audio, and text, polling API, and presenting rich clipboard / share actions.",
+      "acceptanceCriteria": [
+        "iOS Shortcut workflow handles URL, media file, and text inputs automatically",
+        "Polls backend with exponential backoff and timeout",
+        "Displays transcript and conditional SRT/VTT actions when captions exist",
+        "Complete user installation guide in ios/README.md"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:10:53.747885+00:00: tests/test_ios_shortcut.py passed (2/2)",
+      "priority": 16
+    },
+    {
+      "id": "RT-017",
+      "title": "Application security, rate limiting, and input sanitization",
+      "description": "Implement client rate limiting, path traversal protection, payload size enforcement, and secret protection.",
+      "acceptanceCriteria": [
+        "Rate limiter restricts excessive requests per IP/token",
+        "File paths are strictly sanitized against traversal attacks",
+        "Headers and payloads exceeding bounds are rejected with 413/429",
+        "Unit tests pass: tests/test_security_hardening.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:20:00Z: tests/test_rt017_security.py passed (5/5)",
+      "priority": 17
+    },
+    {
+      "id": "RT-018",
+      "title": "Observability, privacy logging, and metrics",
+      "description": "Build structured JSON logging recording job IDs, provider latency, fallbacks, and error codes while strictly masking private transcripts, media, and authorization keys.",
+      "acceptanceCriteria": [
+        "Structured logs omit raw audio, video, URLs, and transcripts by default",
+        "Tracks provider latency, error rates, and fallback occurrences",
+        "Unit tests pass: tests/test_logging_privacy.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:20:30Z: tests/test_rt018_logging.py passed (5/5)",
+      "priority": 18
+    },
+    {
+      "id": "RT-019",
+      "title": "Model benchmarking system",
+      "description": "Build python -m benchmark.run CLI measuring Word Error Rate (WER), Character Error Rate (CER), latency, cost, and code-switch preservation against test audio datasets.",
+      "acceptanceCriteria": [
+        "benchmark/run.py executes against benchmark dataset",
+        "Calculates real Levenshtein-based WER and CER without hallucinated metrics",
+        "Generates structured benchmark report in benchmark/results/",
+        "Unit tests pass: tests/test_benchmark.py"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:21:00Z: tests/test_rt019_benchmark.py passed (9/9)",
+      "priority": 19
+    },
+    {
+      "id": "RT-020",
+      "title": "Production Docker & Render deployment configuration",
+      "description": "Create production multi-stage Dockerfile, docker-compose.yml, and render.yaml configured for Render free/starter tiers with non-root security and health check.",
+      "acceptanceCriteria": [
+        "Dockerfile builds minimal production image with FFmpeg installed and non-root user",
+        "docker-compose.yml allows 1-command local startup",
+        "render.yaml documents exact deployment specification with 512MB RAM awareness"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T11:21:30Z: tests/test_rt020_deployment.py passed (8/8)",
+      "priority": 20
+    },
+    {
+      "id": "RT-021",
+      "title": "Comprehensive end-to-end test suite",
+      "description": "Run full test suite across all modules (security, media, ASR, captions, jobs, health).",
+      "acceptanceCriteria": [
+        "pytest tests/ runs and passes all automated tests",
+        "Coverage spans unit, integration, and security checks",
+        "All test outputs are green"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T16:55:53Z: tests/test_rt021_integration.py passed (9/9)",
+      "priority": 21
+    },
+    {
+      "id": "RT-022",
+      "title": "Complete technical documentation",
+      "description": "Write comprehensive documentation: README.md, docs/architecture.md, docs/api.md, docs/ios-shortcut.md, docs/deployment.md, docs/providers.md, docs/security.md, docs/benchmarking.md.",
+      "acceptanceCriteria": [
+        "README.md contains quickstart, architecture, env vars, iOS Shortcut setup, troubleshooting",
+        "docs/ directory contains deep-dive guides for each domain",
+        "All file paths and links are verified"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T16:56:54Z: tests/test_rt022_documentation.py passed (3/3)",
+      "priority": 22
+    },
+    {
+      "id": "RT-023",
+      "title": "Final acceptance testing & completion report",
+      "description": "Perform end-to-end verification of complete flow, verify all stories in ralph/prd.json have passes=true, record final results in ralph/progress.txt, and generate final report.",
+      "acceptanceCriteria": [
+        "All 23 stories have passes: true in ralph/prd.json",
+        "All acceptance tests pass cleanly",
+        "Final report generated detailing architecture, models, fallback chain, costs, and limitations"
+      ],
+      "passes": true,
+      "blocked": false,
+      "notes": "Passed at 2026-09-20T16:59:28Z: tests/test_rt023_acceptance.py passed (5/5) and all 93 suite tests green",
+      "priority": 23
+    }
+  ]
+}

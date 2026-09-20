@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: reeltranscribe
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: HF_TOKEN
+        sync: false
+      - key: API_SECRET
+        generateValue: true
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"
+      - key: MAX_FILE_SIZE_MB
+        value: "100"
+      - key: MAX_DURATION_SECONDS
+        value: "300"
+    buildFilter:
+      paths:
+        - backend/**
+        - requirements.txt

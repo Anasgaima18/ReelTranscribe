@@ -1,0 +1,53 @@
+# Environment & Secrets (Crucial: never commit real API keys)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Temporary media & download directories
+temp/
+tmp/
+*.tmp
+*.mp4
+*.mp3
+*.wav
+*.m4a
+*.webm
+*.srt
+*.vtt
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS & Platform artifacts
+*.log
+logs/
+.coverage.*
+
+# Antigravity & Agent workspace artifacts
+.agents/
